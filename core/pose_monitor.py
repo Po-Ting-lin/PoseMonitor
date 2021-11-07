@@ -2,10 +2,7 @@ import cv2
 import PIL.Image
 from matplotlib import pyplot as plt
 import ipywidgets
-# from IPython.display import display
-
 import json
-
 import torch
 import torchvision.transforms as transforms
 
@@ -27,7 +24,7 @@ class PoseMonitor(object):
         self.camera = None
         self.width = 224
         self.height = 224
-        self.frame_rate = 20
+        self.frame_rate = 30
         self.display = display
         self.display.info.RealWidth = self.width
         self.display.info.RealHeight = self.height
@@ -46,19 +43,19 @@ class PoseMonitor(object):
         self.camera.running = False
 
     def __init_model(self):
-        print("loading human pose and topology")
+        print("loading parse object...")
         with open(self.human_config_path, 'r') as f:
             human_pose = json.load(f)
         topology = trt_pose.coco.coco_category_to_topology(human_pose)
         self.parse_objects = ParseObjects(topology)
         self.draw_objects = DrawObjects(topology)
         
-        print("get optimized model")
+        print("load optimized model...")
         self.model = TRTModule()
         self.model.load_state_dict(torch.load(self.optimized_model_path))
 
     def __init_camera(self):
-        print("init camera")
+        print("init camera...")
         self.camera = USBCamera(width=self.width, height=self.height, capture_fps=self.frame_rate)
 
     def __execute(self, change):

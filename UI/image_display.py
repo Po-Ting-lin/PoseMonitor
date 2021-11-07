@@ -33,6 +33,7 @@ class DisplayWindow(object):
         self.tkImage = ImageTk.PhotoImage(Image.fromarray(self.image))
         self.blank_tkImage = ImageTk.PhotoImage(Image.fromarray(self.image))
         self.image_object = self.zone.create_image(0, 0, anchor=tk.NW, image=self.tkImage)
+        self.is_displaying = False
 
     @staticmethod
     def __tk_image_convert(image):
@@ -44,10 +45,12 @@ class DisplayWindow(object):
         self.zone.itemconfig(self.image_object, image=self.tkImage)
 
     def display(self, image):
-        if image is None:
+        if image is None and self.is_displaying:
             return
+        self.is_displaying = True
         self.image = self.__resize(image)
         self.update_by_updating_image(self.image)
+        self.is_displaying = False
 
     def update_by_updating_image(self, image):
         self.tkImage = self.__tk_image_convert(image)
