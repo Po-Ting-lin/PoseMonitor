@@ -1,4 +1,5 @@
 import cv2
+import time
 import PIL.Image
 from matplotlib import pyplot as plt
 import ipywidgets
@@ -13,7 +14,6 @@ from trt_pose.draw_objects import DrawObjects
 from trt_pose.parse_objects import ParseObjects
 
 from jetcam.usb_camera import USBCamera
-from jetcam.utils import bgr8_to_jpeg
 
 
 class PoseMonitor(object):
@@ -30,13 +30,17 @@ class PoseMonitor(object):
         self.display.info.RealHeight = self.height
         self.optimized_model_path = r'resources/resnet18_baseline_att_224x224_A_epoch_249_trt.pth'
         self.human_config_path = r'resources/human_pose.json'
-
+        self.frame_count = 0.0
+        self.start_time = None
+        self.end_time = None
+        
         self.__init_model()
         self.__init_camera()
 
     def start(self):
         self.camera.running = True
         self.camera.observe(self.__execute, names='value')
+        self.start_time = time.time()
 
     def stop(self):
         self.camera.unobserve_all()
@@ -50,7 +54,7 @@ class PoseMonitor(object):
         self.parse_objects = ParseObjects(topology)
         self.draw_objects = DrawObjects(topology)
         
-        print("load optimized model...")
+        print("loading optimized model...")
         self.model = TRTModule()
         self.model.load_state_dict(torch.load(self.optimized_model_path))
 
@@ -66,6 +70,12 @@ class PoseMonitor(object):
         counts, objects, peaks = self.parse_objects(cmap, paf)
         self.draw_objects(image, counts, objects, peaks)
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+        self.frame_count += 1
+        if self.frame_count == 50:
+            self.end_time = time.time()
+            print("frame rate: " + str(self.frame_count / (self.end_time - self.start_time)) + " fps")
+            self.frame_count = 0
+            self.start_time = time.time()
         self.display.display(image)
 
     def __preprocess(self, image):
