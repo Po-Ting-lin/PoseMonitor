@@ -2,6 +2,7 @@ from os.path import isfile
 import cv2
 from tkinter.filedialog import askopenfile
 from UI.main_page_design import MainPageDesign
+from core.pose_monitor import PoseMonitor
 import subprocess
 
 
@@ -22,7 +23,8 @@ class MainPage(MainPageDesign):
 
         # root path
         self.root_path = None
-        self.dream_path = r"dreampower\dreampower.exe"
+
+        self.pm = None
 
         # box
         self.plot_tile = Tile()
@@ -49,10 +51,12 @@ class MainPage(MainPageDesign):
         self.left_display.display(img)
 
     def grab(self):
-        pass
+        if self.pm == None:
+            self.pm = PoseMonitor(self.left_display)
+        self.pm.start()
 
     def stop(self):
-        pass
+        self.pm.stop()
 
     @staticmethod
     def open_image(path):

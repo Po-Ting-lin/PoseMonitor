@@ -1,6 +1,6 @@
 *.idea
 *.ipynb_checkpoints/*
-
+resources/*
 
 # User-specific files
 *.rsuser
