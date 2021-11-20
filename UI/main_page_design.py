@@ -4,7 +4,7 @@ from UI.image_display import DisplayWindowInfo, DisplayWindow
 
 
 class MainPageDesign(BasePage):
-    def __init__(self, parent, controller):
+    def __init__(self, parent, controller, refresh_callback):
         super(MainPageDesign, self).__init__(parent, controller)
 
         # left display
@@ -35,6 +35,9 @@ class MainPageDesign(BasePage):
         # key capture
         self.key_var = None
 
+        # refresh
+        self.__refresh = refresh_callback
+
         # layout
         self.control_x_start = 180
         self.setup()
@@ -46,7 +49,6 @@ class MainPageDesign(BasePage):
         self.select_root_path_layout()
         self.grab_button_layout()
         # self.select_parameter_layout()
-
 
     def left_display_layout(self):
         self.left_display_info = DisplayWindowInfo()
@@ -62,7 +64,8 @@ class MainPageDesign(BasePage):
         self.left_display_info.ImageYOffset = 0
         self.left_display_info.ImageWidth = 0
         self.left_display_info.ImageHeight = 0
-        self.left_display = DisplayWindow(self, self.left_display_info)
+        self.left_display = DisplayWindow(self, self.left_display_info, self.__refresh)
+        self.left_display.start_display()
 
     def select_root_path_layout(self):
         y = 10
@@ -75,8 +78,8 @@ class MainPageDesign(BasePage):
     def grab_button_layout(self):
         y = 12
         x = self.control_x_start
-        tk.Button(self, text='Grab', command=self.grab, width=10).grid(row=y, column=x, columnspan=10)
-        tk.Button(self, text='Stop', command=self.stop, width=10).grid(row=y+2, column=x, columnspan=10)
+        tk.Button(self, text='Grab', command=self.start_grab_image, width=10).grid(row=y, column=x, columnspan=10)
+        tk.Button(self, text='Stop', command=self.stop_grab_image, width=10).grid(row=y + 2, column=x, columnspan=10)
 
     # def select_parameter_layout(self):
     #     y = 16
@@ -114,8 +117,8 @@ class MainPageDesign(BasePage):
     def select_path(self):
         pass
 
-    def grab(self):
+    def start_grab_image(self):
         pass
 
-    def stop(self):
+    def stop_grab_image(self):
         pass

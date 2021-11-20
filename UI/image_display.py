@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import queue
+import threading
 import tkinter as tk
 from PIL import Image, ImageTk
 
@@ -25,7 +27,7 @@ class DisplayWindowInfo(object):
 
 
 class DisplayWindow(object):
-    def __init__(self, frame, info):
+    def __init__(self, frame, info, refresh_callback):
         self.info = info
         self.zone = tk.Canvas(frame, width=info.Width, height=info.Height)
         self.zone.grid(row=info.YOffset, column=info.XOffset, rowspan=info.Y, columnspan=info.X)
@@ -34,23 +36,41 @@ class DisplayWindow(object):
         self.blank_tkImage = ImageTk.PhotoImage(Image.fromarray(self.image))
         self.image_object = self.zone.create_image(0, 0, anchor=tk.NW, image=self.tkImage)
         self.is_displaying = False
+        self.display_thread = None
+        self.__refresh = refresh_callback
+        self.queue = queue.Queue()
 
     @staticmethod
     def __tk_image_convert(image):
         image = Image.fromarray(image)
         return ImageTk.PhotoImage(image=image)
 
-    def update_blank(self):
-        self.tkImage = get_blank_tkImage(self.info.Width, self.info.Height)
-        self.zone.itemconfig(self.image_object, image=self.tkImage)
-
-    def display(self, image):
-        if image is None and self.is_displaying:
+    def add_queue(self, image):
+        if image is None:
             return
-        self.is_displaying = True
-        self.image = self.__resize(image)
-        self.update_by_updating_image(self.image)
-        self.is_displaying = False
+        self.queue.put(image)
+
+    def start_display(self):
+        if not self.is_displaying:
+            print("start display")
+            self.is_displaying = True
+            self.display_thread = threading.Thread(target=self.display_loop)
+            self.display_thread.start()
+
+    def stop_display(self):
+        if self.is_displaying:
+            print("stop display")
+            self.is_displaying = False
+            self.display_thread.join()
+
+    def display_loop(self):
+        while self.is_displaying:
+            if self.queue is not None and self.queue.not_empty:
+                self.image = self.__resize(self.queue.get())
+                self.update_by_updating_image(self.image)
+            elif self.queue is not None and self.queue.empty:
+                self.image = np.zeros((self.info.Height, self.info.Width))
+                self.update_by_updating_image(self.image)
 
     def update_by_updating_image(self, image):
         self.tkImage = self.__tk_image_convert(image)

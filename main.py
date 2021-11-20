@@ -9,6 +9,7 @@ class MainApp(tk.Tk):
         tk.Tk.__init__(self, *args, **kwargs)
         self.title_font = tkfont.Font(family='Helvetica', size=18, weight="bold", slant="italic")
         self.initialize()
+        self.protocol('WM_DELETE_WINDOW', self.close)
 
         # the container is where we'll stack a bunch of frames
         # on top of each other, then the one we want visible
@@ -21,7 +22,7 @@ class MainApp(tk.Tk):
         self.frames = {}
         for F in [MainPage]:
             page_name = F.__name__
-            frame = F(parent=container, controller=self)
+            frame = F(parent=container, controller=self, refresh_callback=self.__refresh)
             self.frames[page_name] = frame
             # put all of the pages in the same location;
             # the one on the top of the stacking order
@@ -32,10 +33,19 @@ class MainApp(tk.Tk):
     def initialize(self):
         return None
 
+    def close(self):
+        print("start close process...")
+        self.frames["MainPage"].stop()
+        self.destroy()
+
     def show_frame(self, page_name):
         """ Show a frame for the given page name """
         frame = self.frames[page_name]
         frame.tkraise()
+
+    def __refresh(self):
+        self.update()
+        self.update_idletasks()
 
 
 if __name__ == "__main__":

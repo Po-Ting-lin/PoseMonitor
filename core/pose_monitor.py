@@ -2,7 +2,6 @@ import cv2
 import time
 import PIL.Image
 from matplotlib import pyplot as plt
-import ipywidgets
 import json
 import torch
 import torchvision.transforms as transforms
@@ -13,7 +12,7 @@ import trt_pose.coco
 from trt_pose.draw_objects import DrawObjects
 from trt_pose.parse_objects import ParseObjects
 
-from jetcam.usb_camera import USBCamera
+from jetcam_custom.usb_camera import USBCamera
 
 
 class PoseMonitor(object):
@@ -38,13 +37,15 @@ class PoseMonitor(object):
         self.__init_camera()
 
     def start(self):
-        self.camera.running = True
-        self.camera.observe(self.__execute, names='value')
-        self.start_time = time.time()
+        if not self.camera.running:
+            self.camera.running = True
+            self.camera.observe(self.__process_loop, names='value')
+            self.start_time = time.time()
 
     def stop(self):
         self.camera.unobserve_all()
         self.camera.running = False
+        self.camera.stop_running()
 
     def __init_model(self):
         print("loading parse object...")
@@ -62,7 +63,7 @@ class PoseMonitor(object):
         print("init camera...")
         self.camera = USBCamera(width=self.width, height=self.height, capture_fps=self.frame_rate)
 
-    def __execute(self, change):
+    def __process_loop(self, change):
         image = change['new']
         data = self.__preprocess(image)
         cmap, paf = self.model(data)
@@ -76,7 +77,7 @@ class PoseMonitor(object):
             print("frame rate: " + str(self.frame_count / (self.end_time - self.start_time)) + " fps")
             self.frame_count = 0
             self.start_time = time.time()
-        self.display.display(image)
+        self.display.add_queue(image)
 
     def __preprocess(self, image):
         mean = torch.Tensor([0.485, 0.456, 0.406]).cuda()

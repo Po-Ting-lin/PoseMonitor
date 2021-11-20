@@ -3,7 +3,6 @@ import cv2
 from tkinter.filedialog import askopenfile
 from UI.main_page_design import MainPageDesign
 from core.pose_monitor import PoseMonitor
-import subprocess
 
 
 class Tile(object):
@@ -17,8 +16,8 @@ class Tile(object):
 
 
 class MainPage(MainPageDesign):
-    def __init__(self, parent, controller):
-        super(MainPage, self).__init__(parent, controller)
+    def __init__(self, parent, controller, refresh_callback):
+        super(MainPage, self).__init__(parent, controller, refresh_callback)
         self.image_size = 512
 
         # root path
@@ -41,6 +40,9 @@ class MainPage(MainPageDesign):
         self.left_display.zone.bind("<B1-Motion>", self.__left_display_mouse_move)
         self.left_display.zone.bind("<ButtonRelease-1>", self.__left_display_mouse_up)
 
+    def stop(self):
+        self.left_display.stop_display()
+
     def select_path(self):
         file_path = askopenfile().name
         self.file_path_var.set(file_path)
@@ -48,14 +50,14 @@ class MainPage(MainPageDesign):
         img = self.open_image(self.root_path)
         self.left_display.info.RealWidth = img.shape[1]
         self.left_display.info.RealHeight = img.shape[0]
-        self.left_display.display(img)
+        self.left_display.add_queue(img)
 
-    def grab(self):
-        if self.pm == None:
+    def start_grab_image(self):
+        if self.pm is None:
             self.pm = PoseMonitor(self.left_display)
         self.pm.start()
 
-    def stop(self):
+    def stop_grab_image(self):
         self.pm.stop()
 
     @staticmethod
