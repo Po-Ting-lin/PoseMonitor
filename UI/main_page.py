@@ -55,10 +55,10 @@ class MainPage(MainPageDesign):
     def start_grab_image(self):
         if self.pm is None:
             self.pm = PoseMonitor(self.left_display)
-        self.pm.start()
+        self.pm.start_camera()
 
     def stop_grab_image(self):
-        self.pm.stop()
+        self.pm.stop_camera()
 
     @staticmethod
     def open_image(path):

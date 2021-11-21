@@ -1,18 +1,14 @@
 import cv2
-import time
 import PIL.Image
-from matplotlib import pyplot as plt
 import json
 import torch
 import torchvision.transforms as transforms
-
-from torch2trt import TRTModule, torch2trt
+from torch2trt import TRTModule
 import trt_pose.models
 import trt_pose.coco
 from trt_pose.draw_objects import DrawObjects
 from trt_pose.parse_objects import ParseObjects
-
-from jetcam_custom.usb_camera import USBCamera
+from jetcam_custom.my_camera import MyCamera
 
 
 class PoseMonitor(object):
@@ -29,23 +25,15 @@ class PoseMonitor(object):
         self.display.info.RealHeight = self.height
         self.optimized_model_path = r'resources/resnet18_baseline_att_224x224_A_epoch_249_trt.pth'
         self.human_config_path = r'resources/human_pose.json'
-        self.frame_count = 0.0
-        self.start_time = None
-        self.end_time = None
         
         self.__init_model()
         self.__init_camera()
 
-    def start(self):
-        if not self.camera.running:
-            self.camera.running = True
-            self.camera.observe(self.__process_loop, names='value')
-            self.start_time = time.time()
+    def start_camera(self):
+        self.camera.start_capture(self.__process_loop)
 
-    def stop(self):
-        self.camera.unobserve_all()
-        self.camera.running = False
-        self.camera.stop_running()
+    def stop_camera(self):
+        self.camera.stop_capture()
 
     def __init_model(self):
         print("loading parse object...")
@@ -61,22 +49,15 @@ class PoseMonitor(object):
 
     def __init_camera(self):
         print("init camera...")
-        self.camera = USBCamera(width=self.width, height=self.height, capture_fps=self.frame_rate)
+        self.camera = MyCamera(device=0, width=self.width, height=self.height, fps=self.frame_rate)
 
-    def __process_loop(self, change):
-        image = change['new']
+    def __process_loop(self, image):
         data = self.__preprocess(image)
         cmap, paf = self.model(data)
         cmap, paf = cmap.detach().cpu(), paf.detach().cpu()
         counts, objects, peaks = self.parse_objects(cmap, paf)
         self.draw_objects(image, counts, objects, peaks)
         image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-        self.frame_count += 1
-        if self.frame_count == 50:
-            self.end_time = time.time()
-            print("frame rate: " + str(self.frame_count / (self.end_time - self.start_time)) + " fps")
-            self.frame_count = 0
-            self.start_time = time.time()
         self.display.add_queue(image)
 
     def __preprocess(self, image):

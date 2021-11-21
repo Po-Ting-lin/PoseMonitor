@@ -1,9 +1,11 @@
 import cv2
 import numpy as np
 import queue
+import time
 import threading
 import tkinter as tk
 from PIL import Image, ImageTk
+from core.rate_counter import RateCounter
 
 
 def get_blank_tkImage(width, height):
@@ -39,6 +41,7 @@ class DisplayWindow(object):
         self.display_thread = None
         self.__refresh = refresh_callback
         self.queue = queue.Queue()
+        self.display_counter = RateCounter("display rate", 50)
 
     @staticmethod
     def __tk_image_convert(image):
@@ -54,23 +57,28 @@ class DisplayWindow(object):
         if not self.is_displaying:
             print("start display")
             self.is_displaying = True
-            self.display_thread = threading.Thread(target=self.display_loop)
+            self.display_thread = threading.Thread(target=self.display_loop, name="display thread")
+            self.display_thread.daemon = True  # kill the thread when sys.exit
             self.display_thread.start()
+            self.display_counter.start()
 
     def stop_display(self):
         if self.is_displaying:
             print("stop display")
             self.is_displaying = False
-            self.display_thread.join()
+            #self.display_thread.join()
 
     def display_loop(self):
         while self.is_displaying:
-            if self.queue is not None and self.queue.not_empty:
-                self.image = self.__resize(self.queue.get())
-                self.update_by_updating_image(self.image)
-            elif self.queue is not None and self.queue.empty:
-                self.image = np.zeros((self.info.Height, self.info.Width))
-                self.update_by_updating_image(self.image)
+            if self.queue is not None:
+                if self.queue.not_empty:
+                    self.image = self.__resize(self.queue.get())
+                    self.update_by_updating_image(self.image)
+                elif self.queue.empty:
+                    self.image = np.zeros((self.info.Height, self.info.Width))
+                    self.update_by_updating_image(self.image)
+                self.display_counter.add_to_count()
+        print("End of display loop")
 
     def update_by_updating_image(self, image):
         self.tkImage = self.__tk_image_convert(image)

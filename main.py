@@ -1,3 +1,4 @@
+import sys
 import tkinter as tk
 from tkinter import font as tkfont
 from UI.main_page import MainPage
@@ -37,6 +38,8 @@ class MainApp(tk.Tk):
         print("start close process...")
         self.frames["MainPage"].stop()
         self.destroy()
+        print("finish destroy")
+        sys.exit()
 
     def show_frame(self, page_name):
         """ Show a frame for the given page name """
