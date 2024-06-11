@@ -40,6 +40,8 @@ class MainPage(MainPageDesign):
         self.left_display.zone.bind("<B1-Motion>", self.__left_display_mouse_move)
         self.left_display.zone.bind("<ButtonRelease-1>", self.__left_display_mouse_up)
 
+        self.pm = PoseMonitor(self.left_display)
+
     def stop(self):
         self.left_display.stop_display()
 
@@ -53,12 +55,13 @@ class MainPage(MainPageDesign):
         self.left_display.add_queue(img)
 
     def start_grab_image(self):
-        if self.pm is None:
-            self.pm = PoseMonitor(self.left_display)
         self.pm.start_camera()
 
     def stop_grab_image(self):
         self.pm.stop_camera()
+
+    def simulate(self):
+        self.pm.simulate()
 
     @staticmethod
     def open_image(path):

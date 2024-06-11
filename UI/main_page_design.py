@@ -80,6 +80,7 @@ class MainPageDesign(BasePage):
         x = self.control_x_start
         tk.Button(self, text='Grab', command=self.start_grab_image, width=10).grid(row=y, column=x, columnspan=10)
         tk.Button(self, text='Stop', command=self.stop_grab_image, width=10).grid(row=y + 2, column=x, columnspan=10)
+        tk.Button(self, text='Simulate', command=self.simulate, width=10).grid(row=y+4, column=x, columnspan=10)
 
     # def select_parameter_layout(self):
     #     y = 16
@@ -121,4 +122,7 @@ class MainPageDesign(BasePage):
         pass
 
     def stop_grab_image(self):
+        pass
+
+    def simulate(self):
         pass
